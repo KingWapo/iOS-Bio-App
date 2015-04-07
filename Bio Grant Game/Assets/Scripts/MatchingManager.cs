@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-public class MatchingManager : MonoBehaviour {
+public class MatchingManager : Manager {
 
     public static bool statusVisible;
 
@@ -91,8 +91,12 @@ public class MatchingManager : MonoBehaviour {
         }
     }
 
-    public void ChoiceMade(bool isCorrect)
+    public override void OnPlantClick(GameObject PlantClicked)
     {
+        base.OnPlantClick(PlantClicked);
+
+        bool isCorrect = PlantClicked.GetComponent<PlantInformation>().IsCorrect;
+
         if (isCorrect)
         {
             Instantiate(CorrectPrefab);

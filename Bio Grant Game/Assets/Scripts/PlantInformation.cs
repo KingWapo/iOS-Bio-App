@@ -23,7 +23,7 @@ public class PlantInformation : MonoBehaviour
     {
         if (!MatchingManager.statusVisible)
         {
-            Manager.GetComponent<MatchingManager>().ChoiceMade(IsCorrect);
+            Manager.GetComponent<Manager>().OnPlantClick(gameObject);
         }
     }
 }
