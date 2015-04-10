@@ -26,4 +26,12 @@ public class PlantInformation : MonoBehaviour
             Manager.GetComponent<Manager>().OnPlantClick(gameObject);
         }
     }
+
+    public void ClearImages()
+    {
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            transform.GetChild(i).gameObject.SetActive(false);
+        }
+    }
 }

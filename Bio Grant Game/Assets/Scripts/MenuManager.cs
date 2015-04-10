@@ -18,7 +18,7 @@ public class MenuManager : MonoBehaviour {
 
     public void IndexClicked()
     {
-
+        Application.LoadLevel("Index");
     }
 
     public void IdentifyPlantsClicked()

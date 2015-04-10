@@ -80,22 +80,24 @@ public class IndexManager : Manager {
         if (inDirectoryView)
         {
             viewingPlant = PlantClicked;
-            switchViews();
+            SwitchViews();
         }
         else
         {
             int index = imageChoices.IndexOf(PlantClicked);
-            print(index);
+            if (index > 0)
+                setCurrentImage(index);
         }
     }
 
-    private void switchViews()
+    public void SwitchViews()
     {
         if (inDirectoryView)
         {
             inDirectoryView = false;
             DirectoryView.SetActive(false);
             InfoView.SetActive(true);
+            hidePlants();
             setInfo();
         }
         else
@@ -103,6 +105,8 @@ public class IndexManager : Manager {
             inDirectoryView = true;
             DirectoryView.SetActive(true);
             InfoView.SetActive(false);
+            showPlants();
+            destroyInfo();
         }
     }
 
@@ -146,6 +150,7 @@ public class IndexManager : Manager {
         for (int i = page * plantsPerPage; i < (page + 1) * plantsPerPage && i < plants.Count; i++)
         {
             GameObject newPlant = (GameObject) Instantiate(plants[i]);
+            newPlant.transform.localScale = new Vector3(0.8f, 0.8f, 1);
             newPlant.transform.position = directoryPlantPositions[i - page * plantsPerPage].position;
             newPlant.transform.GetChild(Random.Range(0, newPlant.transform.childCount)).gameObject.SetActive(true);
             directoryTextPositions[i - page * plantsPerPage].GetComponent<Text>().text = newPlant.GetComponent<PlantInformation>().Name;
@@ -167,31 +172,49 @@ public class IndexManager : Manager {
         }
     }
 
+    private void hidePlants()
+    {
+        for (int i = 0; i < currentPlants.Count; i++)
+        {
+            currentPlants[i].GetComponent<PlantInformation>().ClearImages();
+        }
+    }
+
+    private void showPlants()
+    {
+        for (int i = 0; i < currentPlants.Count; i++)
+        {
+            currentPlants[i].transform.GetChild(Random.Range(0, currentPlants[i].transform.childCount)).gameObject.SetActive(true);
+        }
+    }
+
     /*
      * Info View Functions
      */
 
     private void setInfo()
     {
-        print(viewingPlant);
+        viewingPlant.GetComponent<PlantInformation>().ClearImages();
         for (int i = 0; i < viewingPlant.transform.childCount; i++)
         {
             if (imageChoices.Count > i)
             {
                 Destroy(imageChoices[i]);
-                imageChoices[i] = viewingPlant.transform.GetChild(i).gameObject;
+                imageChoices[i] = (GameObject) Instantiate(viewingPlant);
             }
             else
             {
-                imageChoices.Add(viewingPlant.transform.GetChild(i).gameObject);
+                GameObject newPlant = (GameObject)Instantiate(viewingPlant);
+                imageChoices.Add(newPlant);
             }
 
+            imageChoices[i].transform.GetChild(i).gameObject.SetActive(true);
             imageChoices[i].transform.position = infoImagePositions[i].transform.position;
             imageChoices[i].transform.localScale = infoImagePositions[i].transform.localScale;
             imageChoices[i].SetActive(true);
         }
 
-        setCurrentImage();
+        setCurrentImage(0);
 
         InfoPlantName.GetComponent<Text>().text = viewingPlant.GetComponent<PlantInformation>().Name.ToUpper();
         InfoLatinName.GetComponent<Text>().text = viewingPlant.GetComponent<PlantInformation>().LatinName;
@@ -201,11 +224,20 @@ public class IndexManager : Manager {
         }
     }
 
-    private void setCurrentImage()
+    private void setCurrentImage(int index)
     {
         Destroy(currentImage);
-        currentImage = (GameObject)Instantiate(imageChoices[0]);
+        currentImage = (GameObject)Instantiate(imageChoices[index]);
         currentImage.transform.position = InfoMainImagePosition.transform.position;
         currentImage.transform.localScale = InfoMainImagePosition.transform.localScale;
+    }
+
+    private void destroyInfo()
+    {
+        for (int i = 0; i < imageChoices.Count; i++)
+        {
+            Destroy(imageChoices[i]);
+        }
+        Destroy(currentImage);
     }
 }
