@@ -5,109 +5,310 @@ using System.Collections.Generic;
 
 public class IndexManager : Manager {
 
+// Public variables.
+
+    // A reference to the Parent holding
+    // all the plants.
     public GameObject PlantParent;
     
-    // Directory public variables
+    /* Directory public variables */
+
+    // The view holding the various objects that
+    // can only be viewed in the directory setup.
     public GameObject DirectoryView;
+
+    // The Parent objects holding the positions
+    // to dynamically place the plant's pictures
+    // and names at.
     public GameObject DirectoryPlantPositions;
     public GameObject DirectoryTextPositions;
+
+    // Next and Previous button used to move
+    // forward or backward down the list.
+    // Need a reference to activate or deactivate
+    // them as needed.
     public GameObject NextButton;
     public GameObject PreviousButton;
 
-    // Info public variables
+    /* Info public variables */
+
+    // The view holding the various objects that
+    // can only be viewed in the directory setup.
     public GameObject InfoView;
+
+    // The Parent object holding the positions
+    // to dynamically place the various images 
+    // of the plant.
     public GameObject InfoImagePositions;
+
+    // The main image position and scale.
     public GameObject InfoMainImagePosition;
+
+    // The Text object to hold the name.
     public GameObject InfoPlantName;
+
+    // The Text object to hold the Latin name.
     public GameObject InfoLatinName;
+
+    // The parent object holding the text
+    // objects for the plant's details.
     public GameObject InfoDetails;
 
+    /* Search public variables */
+
+    // The view holding the various objects that
+    // can only be viewed in the Search View.
+    public GameObject SearchView;
+
+// Private variables.
+
+    // Boolean to determine if the user is
+    // in the directory view or not.
     private bool inDirectoryView;
+
+    // A list to hold all the various objects
+    // the user can interact with.
     private List<GameObject> plants;
 
-    // Directory private variables
+    /* Directory private variables */
+
+    // The current page the user is on
+    // for viewing the plants.
     private int page;
+
+    // How many plants can fit on a page
     private int plantsPerPage;
+
+    // List of the current plants that are
+    // being shown on a page. 
     private List<GameObject> currentPlants;
+
+    // List of the plant positions for the images
+    // grabbed from the parent.
     private List<Transform> directoryPlantPositions;
+
+    // List of the plant positions for the text
+    // grabbed from the parent.
     private List<Transform> directoryTextPositions;
 
-    // Info private variables
+    /* Info private variables */
+    
+    // The plant that is being looked at
+    // for further information.
     private GameObject viewingPlant;
+
+    // The current image being shown as
+    // the large main image for the plant.
     private GameObject currentImage;
+
+    // A list of all the plant's different
+    // images.
     private List<GameObject> imageChoices;
+
+    // A list of positions for th images in
+    // imageChoices to be placed. Grabbed from
+    // the parent.
     private List<GameObject> infoImagePositions;
 
 	// Use this for initialization
 	void Start () {
+        // Start out in Directory view.
         inDirectoryView = true;
+
+        // Initialize the plants list.
         plants = new List<GameObject>();
 
-        // Set up Directory
+        // Initialize the Directory variables.
         page = 0;
         plantsPerPage = 12;
         currentPlants = new List<GameObject>();
         directoryPlantPositions = new List<Transform>();
         directoryTextPositions = new List<Transform>();
+
+        // Grab each child of the PlantParent and add it to
+        // the plants list for references to all the plants.
         for (int i = 0; i < PlantParent.transform.childCount; i++)
         {
             plants.Add(PlantParent.transform.GetChild(i).gameObject);
         }
+
+        // Grab each child of the DirectoryPlantPosition and
+        // DirectoryTextPosition and add them to a list for 
+        // references to the positions.
         for (int i = 0; i < DirectoryPlantPositions.transform.childCount; i++)
         {
             directoryPlantPositions.Add(DirectoryPlantPositions.transform.GetChild(i));
             directoryTextPositions.Add(DirectoryTextPositions.transform.GetChild(i));
         }
+
+        // Call setPlants() to set up the images based off of these
+        // initialzed values.
         setPlants();
 
-        // Set up info
+        // Initialize the Info variables.
         imageChoices = new List<GameObject>();
         infoImagePositions = new List<GameObject>();
+
+        // Grab each child of the InfoImagePositions and add them to the
+        // infoImagePositions for references to the position.
         for (int i = 0; i < InfoImagePositions.transform.childCount - 1; i++)
         {
             infoImagePositions.Add(InfoImagePositions.transform.GetChild(i).gameObject);
         }
 	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
 
+    /*
+     * OnPlantClicked(GameObject)
+     * 
+     * When a plant is clicked on screen, call this
+     * method to determine what to do.
+     * 
+     * PlantClicked - Reference to the plant that was
+     *                clicked.
+    */
     public override void OnPlantClick(GameObject PlantClicked)
     {
+        // Call the Manager's OnPlantClicked() first.
+        // Unneccessary for now since there's nothing
+        // in Manager's OnPlantClicked().
         base.OnPlantClick(PlantClicked);
+
+        // Determine if in Directory view or
+        // info view.
+        // If in Directory view, switch to Info.
+        // If in Info View, switch main image.
         if (inDirectoryView)
         {
+            // Set the viewingPlant to
+            // be the one that's clicked.
             viewingPlant = PlantClicked;
+
+            // Switch the views to Info View.
             SwitchViews();
         }
         else
         {
+            // Grab the index of the image clicked on
+            // in the imageChoices list.
             int index = imageChoices.IndexOf(PlantClicked);
+
+            // If the image exists, set this as the
+            // main image. If not, I don't know what
+            // was clicked so don't do anything!
             if (index > 0)
                 setCurrentImage(index);
         }
     }
 
+    /*
+     * GetPlants()
+     * 
+     * Returns the list of all the plants.
+    */
+    public List<GameObject> GetPlants()
+    {
+        return plants;
+    }
+
+    /*
+     * SwitchViews()
+     * 
+     * Switch the view from Directory to Info
+     * or vice versa.
+    */
     public void SwitchViews()
     {
+        // If in Directory, switch to Info,
+        // If in Info, switch to Directory.
         if (inDirectoryView)
         {
             inDirectoryView = false;
+
+            // Set all the objects that are
+            // associated with Directory View
+            // to false so they are NOT seen.
             DirectoryView.SetActive(false);
+
+            // Set all the objects that are
+            // associated with Info View to
+            // true so they ARE seen.
             InfoView.SetActive(true);
+
+            // Hide the images of all the plants that were currently
+            // being viewed in the Directory View.
             hidePlants();
+
+            // Set up the information of the plant that
+            // should be viewed in Info View.
             setInfo();
         }
         else
         {
             inDirectoryView = true;
+
+            // Set all the objects that are
+            // associated with Directory View
+            // to true so they ARE seen.
             DirectoryView.SetActive(true);
+
+            // Set all the objects that are
+            // associated with Info View to
+            // false so they are NOT seen.
             InfoView.SetActive(false);
+
+            // Reactivates an image for each plant 
+            // that was in the currently viewed images
+            // so the user doesn't lose their page.
             showPlants();
+
+            // Destroy all the temp objects used
+            // in info since they will not be needed anymore.
             destroyInfo();
         }
+    }
+
+    /*
+     * SearchClicked()
+     * 
+     * If the user clicks the search button
+     * send them into the hybrid view mode
+     * for displaying search results.
+    */
+    public void SearchClicked()
+    {
+        inDirectoryView = false;
+
+        // Set all the objects that are
+        // associated with Directory View
+        // to false so they are NOT seen.
+        DirectoryView.SetActive(false);
+
+        // Set all the objects that are
+        // associated with Search View
+        // to true so they ARE seen.
+        SearchView.SetActive(true);
+
+        // Hide the images of all the plants that were currently
+        // being viewed in the Directory View.
+        hidePlants();
+    }
+
+    /*
+     * SearchResultClicked(GameObject)
+     * 
+     * 
+    */
+    public void SearchResultClicked(GameObject plant)
+    {
+        SearchView.SetActive(false);
+        InfoView.SetActive(true);
+        viewingPlant = plant;
+        setInfo();
+    }
+
+    public void OnXButtonClicked()
+    {
+        Application.LoadLevel("MainMenu");
     }
 
     /*

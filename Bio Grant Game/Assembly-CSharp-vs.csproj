@@ -52,6 +52,8 @@
      <Compile Include="Assets\Scripts\MenuManager.cs" />
      <Compile Include="Assets\Scripts\Plant.cs" />
      <Compile Include="Assets\Scripts\PlantInformation.cs" />
+     <Compile Include="Assets\Scripts\SearchResult.cs" />
+     <Compile Include="Assets\Scripts\Searching.cs" />
      <Compile Include="Assets\Scripts\TemporaryLife.cs" />
  <Reference Include="UnityEngine.UI">
  <HintPath>D:/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/4.6.1/UnityEngine.UI.dll</HintPath>
