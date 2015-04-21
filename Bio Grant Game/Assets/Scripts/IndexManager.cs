@@ -296,40 +296,88 @@ public class IndexManager : Manager {
     /*
      * SearchResultClicked(GameObject)
      * 
+     * When a search result is clicked, switch to the
+     * Info view on that plant.
      * 
+     * plant - a copy of the plant that will be the 
+     *         focus of the Info view.
     */
     public void SearchResultClicked(GameObject plant)
     {
+        // Set all the objects that are
+        // associated with Search View
+        // to false so they are NOT seen.
         SearchView.SetActive(false);
+
+        // Set all the objects that are
+        // associated with Info View to
+        // true so they ARE seen.
         InfoView.SetActive(true);
+
+        // Set the viewing plant to the
+        // plant that is passed in.
         viewingPlant = plant;
+
+        // Set up the information of the plant that
+        // should be viewed in Info View.
         setInfo();
     }
 
+    /*
+     * OnXButtonClicked()
+     * 
+     * When the X button is clicked, exit this scene
+     * and return to the main menu.
+    */
     public void OnXButtonClicked()
     {
         Application.LoadLevel("MainMenu");
     }
 
-    /*
-     *  Directory view methods.
-     */
+    // -----------------------------------------------------------------
+    //
+    // Directory view methods.
+    //
+    // -----------------------------------------------------------------
 
+    /*
+     * Next()
+     * 
+     * Incrememt the page and reset the plants. Called
+     * when the Next button is hit in game.
+    */
     public void Next()
     {
         page++;
         setPlants();
     }
 
+    /*
+     * Previous()
+     * 
+     * Decrement the page and reset the plants. Called
+     * when the Previous button is hit in game.
+    */
     public void Previous()
     {
         page--;
         setPlants();
     }
 
+    /*
+     * setPlants()
+     * 
+     * Reset the images for the plants in the directory.
+    */
     private void setPlants()
     {
+        // Destroy the previous set of plants.
         destroyPlants();
+
+        // If the page is 0, the set the previous button
+        // to inactive so that the user can't go back
+        // any further.
+        // Else set it to active.
         if (page == 0)
         {
             PreviousButton.SetActive(false);
@@ -339,6 +387,12 @@ public class IndexManager : Manager {
             PreviousButton.SetActive(true);
         }
 
+        // If the page is the last page, determined by
+        // (page + 1) * plantsPerPage being greater than
+        // the amount of plants, then set the Next button
+        // to inactive so that the user can't go further
+        // forward.
+        // Else set it to active.
         if (plants.Count <= (page + 1) * plantsPerPage)
         {
             NextButton.SetActive(false);
@@ -348,39 +402,80 @@ public class IndexManager : Manager {
             NextButton.SetActive(true);
         }
 
+        // Run through the plants that should be seen
+        // on this page, and display them in the correct spots.
         for (int i = page * plantsPerPage; i < (page + 1) * plantsPerPage && i < plants.Count; i++)
         {
+            // Instantiate the object to make a copy into the scene.
             GameObject newPlant = (GameObject) Instantiate(plants[i]);
+
+            // Set the scale to .8 x .8
             newPlant.transform.localScale = new Vector3(0.8f, 0.8f, 1);
+
+            // Place the position based off of the plant positions.
             newPlant.transform.position = directoryPlantPositions[i - page * plantsPerPage].position;
+
+            // Get a random image that is a child of this plant
+            // and set it active. Randomizes the images on the
+            // Directory view.
             newPlant.transform.GetChild(Random.Range(0, newPlant.transform.childCount)).gameObject.SetActive(true);
+            
+            // Set the text of the Text component in the directoryTextPositions
+            // and adjust it's positions. 
             directoryTextPositions[i - page * plantsPerPage].GetComponent<Text>().text = newPlant.GetComponent<PlantInformation>().Name;
             directoryTextPositions[i - page * plantsPerPage].transform.position = new Vector3(newPlant.transform.position.x,
                                                                                               directoryTextPositions[i - page * plantsPerPage].transform.position.y,
                                                                                               directoryTextPositions[i - page * plantsPerPage].transform.position.z);
+            
+            // Add the plant to currentPlants to track objects.
             currentPlants.Add(newPlant);
         }
     }
 
+    /*
+     * destroyPlants()
+     * 
+     * Destroy the previous objects within currentPlants and
+     * remove at that position to avoid nulls. Set text to
+     * blank as well. 
+    */
     private void destroyPlants()
     {
         int count = currentPlants.Count;
         for (int i = 0; i < count; i++)
         {
+            // Destroy the game object at pos 0 and remove it
+            // from the array.
             Destroy(currentPlants[0]);
             currentPlants.RemoveAt(0);
+
+            // Set the text to blank.
             directoryTextPositions[i].GetComponent<Text>().text = "";
         }
     }
 
+    /*
+     * hidePlants()
+     * 
+     * Hide all the images for the plants that
+     * are currently showing.
+    */
     private void hidePlants()
     {
         for (int i = 0; i < currentPlants.Count; i++)
         {
+            // Call clear images to make sure that all the children
+            // of the plant are hidden.
             currentPlants[i].GetComponent<PlantInformation>().ClearImages();
         }
     }
 
+    /*
+     * showPlants()
+     * 
+     * Run through the current plants and set one of the chidren at
+     * random to be active.
+    */
     private void showPlants()
     {
         for (int i = 0; i < currentPlants.Count; i++)
@@ -389,50 +484,103 @@ public class IndexManager : Manager {
         }
     }
 
-    /*
-     * Info View Functions
-     */
 
+    // -----------------------------------------------------------------
+    //
+    // Info View Functions
+    //
+    // -----------------------------------------------------------------
+
+    /*
+     * setInfo()
+     * 
+     * Set up all the objects for the Info View and display it.
+    */
     private void setInfo()
     {
+        // Clear the currently displayed images on the
+        // viewingPlant.
         viewingPlant.GetComponent<PlantInformation>().ClearImages();
+
+        // Run through the children of the viewing plant to
+        // set up imageChoices arrayList.
         for (int i = 0; i < viewingPlant.transform.childCount; i++)
         {
+            // If there are more images than where we are
+            // in the array, then there is an object at
+            // that point. Therefore destroy the object
+            // and replace it with a new one.
+            // Else, just add it to the list.
             if (imageChoices.Count > i)
             {
+                // Destroy the object, and Instantiate the viewing
+                // plant to make an object place it at i in the array.
                 Destroy(imageChoices[i]);
                 imageChoices[i] = (GameObject) Instantiate(viewingPlant);
             }
             else
             {
+                // Instantiate the viewingPlant and add it to the List.
                 GameObject newPlant = (GameObject)Instantiate(viewingPlant);
                 imageChoices.Add(newPlant);
             }
 
+            // Set the image at child i to active.
             imageChoices[i].transform.GetChild(i).gameObject.SetActive(true);
+
+            // Place it in the correct position and scale based off of 
+            // the info from infoImagePositions.
             imageChoices[i].transform.position = infoImagePositions[i].transform.position;
             imageChoices[i].transform.localScale = infoImagePositions[i].transform.localScale;
+
+            // Set this object to active to show it.
             imageChoices[i].SetActive(true);
         }
 
+        // Sets the current image to the
+        // 0th index of imageChoices.
         setCurrentImage(0);
 
+        // Set the text in the InfoPlantName and InfoLatinName to the
+        // respective information.
         InfoPlantName.GetComponent<Text>().text = viewingPlant.GetComponent<PlantInformation>().Name.ToUpper();
         InfoLatinName.GetComponent<Text>().text = viewingPlant.GetComponent<PlantInformation>().LatinName;
+
+        // Run through the details and set the text in InfoDetails' children to the correct info.
         for (int i = 0; i < viewingPlant.GetComponent<PlantInformation>().Details.Count && i < InfoDetails.transform.childCount; i++)
         {
             InfoDetails.transform.GetChild(i).gameObject.GetComponent<Text>().text = viewingPlant.GetComponent<PlantInformation>().Details[i];
         }
     }
 
+    /*
+     * setCurrentImage(int)
+     * 
+     * Set the main image displayed based off
+     * the index being passed in.
+    */
     private void setCurrentImage(int index)
     {
+        // Destroy the currentImage to remove it.
         Destroy(currentImage);
+
+        // Instantiate a new version of the plant from
+        // imageChoices based off the index passed in.
         currentImage = (GameObject)Instantiate(imageChoices[index]);
+
+        // Set currentImage position and scale based off
+        // of InfoMainImagePosition.
         currentImage.transform.position = InfoMainImagePosition.transform.position;
         currentImage.transform.localScale = InfoMainImagePosition.transform.localScale;
     }
 
+    /*
+     * destroyInfo()
+     * 
+     * Run through and destroy the objects used
+     * in the Info view from imageChoices and
+     * currentImage.
+    */
     private void destroyInfo()
     {
         for (int i = 0; i < imageChoices.Count; i++)
