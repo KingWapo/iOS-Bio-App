@@ -24,6 +24,10 @@ public class MatchingManager : Manager {
     // details as children.
     public GameObject Title;
 
+    // The text object that would hold the score
+    // of correct guesses you've done.
+    public Text ScoreText;
+
     // Prefabs holding the display of the
     // correct and incorrect graphics.
     public GameObject CorrectPrefab;
@@ -50,6 +54,11 @@ public class MatchingManager : Manager {
 
     // Reference to the plant the user is lookign for.
     private GameObject correctPlant;
+
+    // Variables to hold the number of correct 
+    // guesses and the number of total guesses.
+    private int correct = 0;
+    private int total = 0;
 
 	// Use this for initialization
 	void Start () {
@@ -176,12 +185,16 @@ public class MatchingManager : Manager {
         // or not. 
         if (isCorrect)
         {
+            correct++;
             Instantiate(CorrectPrefab);
         }
         else
         {
             Instantiate(IncorrectPrefab);
         }
+
+        total++;
+        ScoreText.text = "Score: " + correct + " of " + total;
 
         // Setup the next round.
         SetupMatching();

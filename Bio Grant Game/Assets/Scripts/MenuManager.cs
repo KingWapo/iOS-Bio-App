@@ -33,7 +33,13 @@ public class MenuManager : MonoBehaviour {
     // view the credits for the application.
     public void CreditsClicked()
     {
+        Application.LoadLevel("Credits");
+    }
 
+    // Switch to the Main Menu Screen
+    public void BackClicked()
+    {
+        Application.LoadLevel("MainMenu");
     }
 
     // Exit the application.
