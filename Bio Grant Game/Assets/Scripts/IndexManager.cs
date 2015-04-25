@@ -529,13 +529,23 @@ public class IndexManager : Manager {
             // Set the image at child i to active.
             imageChoices[i].transform.GetChild(i).gameObject.SetActive(true);
 
-            // Place it in the correct position and scale based off of 
-            // the info from infoImagePositions.
-            imageChoices[i].transform.position = infoImagePositions[i].transform.position;
-            imageChoices[i].transform.localScale = infoImagePositions[i].transform.localScale;
+            // Must check if the total number of images is 
+            // less than the positions on screen. There are
+            // some images that there are more images for.
+            if (i < infoImagePositions.Count)
+            {
+                // Place it in the correct position and scale based off of 
+                // the info from infoImagePositions.
+                imageChoices[i].transform.position = infoImagePositions[i].transform.position;
+                imageChoices[i].transform.localScale = infoImagePositions[i].transform.localScale;
 
-            // Set this object to active to show it.
-            imageChoices[i].SetActive(true);
+                // Set this object to active to show it.
+                imageChoices[i].SetActive(true);
+            }
+            else
+            {
+                imageChoices[i].SetActive(false);
+            }
         }
 
         // Sets the current image to the
