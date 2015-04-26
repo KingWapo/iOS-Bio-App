@@ -11,8 +11,8 @@ public class IndexManager : Manager {
     // A reference to the Parent holding
     // all the plants.
     public GameObject PlantParent;
-    
-    /* Directory public variables */
+
+    /*------------------------------Directory public variables------------------------------*/
 
     // The view holding the various objects that
     // can only be viewed in the directory setup.
@@ -31,7 +31,7 @@ public class IndexManager : Manager {
     public GameObject NextButton;
     public GameObject PreviousButton;
 
-    /* Info public variables */
+    /*------------------------------Info public variables------------------------------*/
 
     // The view holding the various objects that
     // can only be viewed in the directory setup.
@@ -55,7 +55,7 @@ public class IndexManager : Manager {
     // objects for the plant's details.
     public GameObject InfoDetails;
 
-    /* Search public variables */
+    /*------------------------------Search public variables------------------------------*/
 
     // The view holding the various objects that
     // can only be viewed in the Search View.
@@ -71,7 +71,7 @@ public class IndexManager : Manager {
     // the user can interact with.
     private List<GameObject> plants;
 
-    /* Directory private variables */
+    /*------------------------------Directory private variables------------------------------*/
 
     // The current page the user is on
     // for viewing the plants.
@@ -92,7 +92,7 @@ public class IndexManager : Manager {
     // grabbed from the parent.
     private List<Transform> directoryTextPositions;
 
-    /* Info private variables */
+    /*------------------------------Info private variables------------------------------*/
     
     // The plant that is being looked at
     // for further information.
@@ -110,6 +110,25 @@ public class IndexManager : Manager {
     // imageChoices to be placed. Grabbed from
     // the parent.
     private List<GameObject> infoImagePositions;
+
+    // The original position of the
+    // name. Used for offset.
+    private Vector3 infoNameOrigPos;
+
+    // The original position of the latin
+    // name. Used for offset.
+    private Vector3 infoLatinNameOrigPos;
+
+    // The original position of the details.
+    // Used for offset. 
+    private Vector3 infoDetailOrigPos;
+
+    // The start position of the swipe.
+    private Vector2 startSwipePos;
+
+    // An offset for when swiping to next plant.
+    // Used to show swipe is working.
+    private float xOffset = 0.0f;
 
 	// Use this for initialization
 	void Start () {
@@ -157,6 +176,69 @@ public class IndexManager : Manager {
             infoImagePositions.Add(InfoImagePositions.transform.GetChild(i).gameObject);
         }
 	}
+
+    /*
+     * Update()
+     * 
+     * Called once a frame.
+    */
+    void Update()
+    {
+        if (infoDetailOrigPos == Vector3.zero)
+        {
+            // Set the original positions of the 
+            // info view information.
+            infoNameOrigPos = InfoPlantName.transform.position;
+            infoLatinNameOrigPos = InfoLatinName.transform.position;
+            infoDetailOrigPos = InfoDetails.transform.position;
+        }
+
+        // If the right arrow is clicked and we are not in the Directory
+        // view and we are not searching, then move to next plant because
+        // we are in Info view.
+        if (!inDirectoryView && !SearchView.activeSelf)
+        {
+            if (Input.GetKey(KeyCode.RightArrow))
+            {
+                xOffset -= 0.1f;
+                positionInfoOffset();
+            }
+            else if (Input.GetKey(KeyCode.LeftArrow))
+            {
+                xOffset += 0.1f;
+                positionInfoOffset();
+            }
+
+            if (Input.touchCount > 0)
+            {
+                if (Input.GetTouch(0).phase == TouchPhase.Began)
+                {
+                    startSwipePos = Input.GetTouch(0).position;
+                }
+                else if (Input.GetTouch(0).phase == TouchPhase.Moved)
+                {
+                    xOffset = (Input.GetTouch(0).position - startSwipePos).x / 100.0f;
+                    positionInfoOffset();
+                }
+                else if (Input.GetTouch(0).phase == TouchPhase.Ended)
+                {
+                    if (xOffset > 0)
+                    {
+                        previousPlant();
+                    }
+                    else if(xOffset < 0)
+                    {
+                        nextPlant();
+                    }
+                }
+            }
+
+            if (Input.GetKeyUp(KeyCode.RightArrow))
+                nextPlant();
+            if (Input.GetKeyUp(KeyCode.LeftArrow))
+                previousPlant();
+        }
+    }
 
     /*
      * OnPlantClicked(GameObject)
@@ -424,12 +506,28 @@ public class IndexManager : Manager {
             // Set the text of the Text component in the directoryTextPositions
             // and adjust it's positions. 
             directoryTextPositions[i - page * plantsPerPage].GetComponent<Text>().text = newPlant.GetComponent<PlantInformation>().Name;
-            directoryTextPositions[i - page * plantsPerPage].transform.position = new Vector3(newPlant.transform.position.x,
-                                                                                              directoryTextPositions[i - page * plantsPerPage].transform.position.y,
-                                                                                              directoryTextPositions[i - page * plantsPerPage].transform.position.z);
+            //directoryTextPositions[i - page * plantsPerPage].transform.position = new Vector3(newPlant.transform.position.x,
+            //                                                                                  directoryTextPositions[i - page * plantsPerPage].transform.position.y,
+            //                                                                                  directoryTextPositions[i - page * plantsPerPage].transform.position.z);
             
             // Add the plant to currentPlants to track objects.
             currentPlants.Add(newPlant);
+        }
+        positionText();
+    }
+
+    /*
+     * positionText()
+     * 
+     * Correctly center-align the text ove the plants as needed.
+    */
+    private void positionText()
+    {
+        for (int i = 0; i < currentPlants.Count; i++)
+        {
+            directoryTextPositions[i].transform.position = new Vector3(currentPlants[i].transform.position.x,
+                                                                       directoryTextPositions[i].transform.position.y,
+                                                                       directoryTextPositions[i].transform.position.z);
         }
     }
 
@@ -483,6 +581,7 @@ public class IndexManager : Manager {
         {
             currentPlants[i].transform.GetChild(Random.Range(0, currentPlants[i].transform.childCount)).gameObject.SetActive(true);
         }
+        positionText();
     }
 
 
@@ -564,6 +663,23 @@ public class IndexManager : Manager {
         }
     }
 
+    private void positionInfoOffset()
+    {
+        // Reposition the imageChoices based on the offset.
+        for (int i = 0; i < infoImagePositions.Count; i++)
+        {
+            imageChoices[i].transform.position = infoImagePositions[i].transform.position + Vector3.right * xOffset;
+        }
+
+        // Reposition the main image.
+        currentImage.transform.position = InfoMainImagePosition.transform.position + Vector3.right * xOffset;
+
+        // Reposition the information on the screen.
+        InfoPlantName.transform.position = infoNameOrigPos + Vector3.right * xOffset;
+        InfoLatinName.transform.position = infoLatinNameOrigPos + Vector3.right * xOffset;
+        InfoDetails.transform.position = infoDetailOrigPos + Vector3.right * xOffset;
+    }
+
     /*
      * setCurrentImage(int)
      * 
@@ -599,5 +715,109 @@ public class IndexManager : Manager {
             Destroy(imageChoices[i]);
         }
         Destroy(currentImage);
+    }
+
+    /*
+     * While in info view, swipe left to go to the next
+     * plant in order.
+    */
+    private void nextPlant()
+    {
+        xOffset = 0.0f;
+        positionInfoOffset();
+
+        // Grab the index of the current
+        // plant in currentPlants.
+        int index = currentPlants.IndexOf(viewingPlant);
+
+        // If the index of the current plant
+        // + 1 is further than currentPlant's
+        // total number, we must change the
+        // page.
+        // Else just set the viewingPlant to
+        // be index + 1 in currentPlants.
+        if (index + 1 >= currentPlants.Count)
+        {
+            // If we are on the final plant, just return
+            // out of here, we can't go right any further.
+            if (page * plantsPerPage + index + 1 >= plants.Count)
+            {
+                return;
+            }
+
+            // Change the page.
+            Next();
+
+            // Reset the new viewingPlant to be the
+            // first one on the next page.
+            viewingPlant = currentPlants[0];
+
+            // Hide the plants again since Next()
+            // will cause them to show.
+            hidePlants();
+        }
+        else
+        {
+            // Reset the new viewingPlant to be
+            // index + 1 in currentPlants.
+            viewingPlant = currentPlants[index + 1];
+        }
+
+        // Destroy what was there and reset
+        // the information.
+        destroyInfo();
+        setInfo();
+    }
+
+    /*
+     * While in info view, swipe right to go to the
+     * previous plant in order.
+    */
+    private void previousPlant()
+    {
+        xOffset = 0.0f;
+        positionInfoOffset();
+
+        // Grab the index of the current
+        // plant in currentPlants.
+        int index = currentPlants.IndexOf(viewingPlant);
+
+        // If the index of the current plant
+        // + 1 is further than currentPlant's
+        // total number, we must change the
+        // page.
+        // Else just set the viewingPlant to
+        // be index + 1 in currentPlants.
+        if (index - 1 < 0)
+        {
+            // If we are on the first plant, just return
+            // out of here, we can't go left any further.
+            if (page * plantsPerPage + index - 1 < 0)
+            {
+                return;
+            }
+
+            // Change the page.
+            Previous();
+
+            // Reset the new viewingPlant to be the
+            // first one on the next page.
+            viewingPlant = currentPlants[currentPlants.Count - 1];
+
+            // Hide the plants again since Next()
+            // will cause them to show.
+            hidePlants();
+        }
+        else
+        {
+            // Reset the new viewingPlant to be
+            // index + 1 in currentPlants.
+            viewingPlant = currentPlants[index - 1];
+        }
+
+        // Destroy what was there and reset
+        // the information.
+        destroyInfo();
+        setInfo();
     }
 }
