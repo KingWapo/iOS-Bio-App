@@ -14,6 +14,10 @@ public class Searching : MonoBehaviour {
     // to be used in displaying the search results.
     public GameObject searchResultPrefab;
 
+    // List to hold search results that
+    // match the search term.
+    public List<GameObject> SearchResults;
+
 // Private variables
 
     // This objects IndexManager Component.
@@ -21,10 +25,6 @@ public class Searching : MonoBehaviour {
     
     // List to hold all the plants.
     private List<GameObject> plantList;
-
-    // List to hold search results that
-    // match the search term.
-    private List<GameObject> searchResults;
 
     // Previous and current search term
     // to determine if the user typed or
@@ -45,7 +45,7 @@ public class Searching : MonoBehaviour {
 
         // A list of the results from searching
         // for the plants.
-        searchResults = new List<GameObject>();
+        SearchResults = new List<GameObject>();
 	}
 	
 	// Update is called once per frame
@@ -79,7 +79,7 @@ public class Searching : MonoBehaviour {
 
                 // Compare the name of the plant to see if it contains the search term
                 // used. If it does add it to search results. Max out at 10.
-                if (info.Name.ToLower().Contains(newSearchTerm.ToLower()) && searchResults.Count < 10)
+                if (info.Name.ToLower().Contains(newSearchTerm.ToLower()) && SearchResults.Count < 10)
                 {
                     // Create a temp GameObject, to create a copy of the
                     // search result prefab button.
@@ -89,7 +89,7 @@ public class Searching : MonoBehaviour {
                     result.transform.SetParent(input.transform);
 
                     // Position the button based off of how many we have already.
-                    result.transform.localPosition = new Vector3(0, (searchResults.Count + 1) * -30, 0);
+                    result.transform.localPosition = new Vector3(0, (SearchResults.Count + 1) * -30, 0);
 
                     // Get the SearchResult component on the button and Set the plant info
                     // for use if it is clicked.
@@ -104,7 +104,7 @@ public class Searching : MonoBehaviour {
 
                     // Add the result to searchResults list so it can get destroyed
                     // when we don't want it anymore.
-                    searchResults.Add(result);
+                    SearchResults.Add(result);
                 }
             }
             // Set the previous serach term so we 
@@ -112,6 +112,13 @@ public class Searching : MonoBehaviour {
             prevSearchTerm = newSearchTerm;
         }
 	}
+
+    public void Clear()
+    {
+        emptySearch();
+
+        input.text = "";
+    }
 
     /*
      * emptySearch()
@@ -122,15 +129,15 @@ public class Searching : MonoBehaviour {
     */ 
     private void emptySearch()
     {
-        while(searchResults.Count > 0)
+        while(SearchResults.Count > 0)
         {
             // Destroy the button saved at 
             // position zero.
-            Destroy(searchResults[0]);
+            Destroy(SearchResults[0]);
 
             // Remove this position to
             // avoid holding null references.
-            searchResults.RemoveAt(0);
+            SearchResults.RemoveAt(0);
         }
     }
 }

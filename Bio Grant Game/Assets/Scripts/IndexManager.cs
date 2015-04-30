@@ -123,6 +123,14 @@ public class IndexManager : Manager {
     // Used for offset. 
     private Vector3 infoDetailOrigPos;
 
+    /*------------------------------Search private variables------------------------------*/
+
+    // Determine if the user is searching or not;
+    private bool searching;
+
+    // The search result clicked when searching
+    private GameObject searchResult;
+
     // The start position of the swipe.
     private Vector2 startSwipePos;
 
@@ -168,6 +176,8 @@ public class IndexManager : Manager {
         // Initialize the Info variables.
         imageChoices = new List<GameObject>();
         infoImagePositions = new List<GameObject>();
+
+        searching = false;
 
         // Grab each child of the InfoImagePositions and add them to the
         // infoImagePositions for references to the position.
@@ -222,21 +232,49 @@ public class IndexManager : Manager {
                 }
                 else if (Input.GetTouch(0).phase == TouchPhase.Ended)
                 {
-                    if (xOffset > 0)
+                    if (Mathf.Abs(xOffset) > 1)
                     {
-                        previousPlant();
+                        if (xOffset > 0)
+                        {
+                            previousPlant();
+                        }
+                        else if (xOffset < 0)
+                        {
+                            nextPlant();
+                        }
                     }
-                    else if(xOffset < 0)
+                    else
                     {
-                        nextPlant();
+                        xOffset = 0.0f;
+                        positionInfoOffset();
                     }
                 }
             }
 
             if (Input.GetKeyUp(KeyCode.RightArrow))
-                nextPlant();
+            {
+                if (Mathf.Abs(xOffset) > 1)
+                {
+                    nextPlant();
+                }
+                else
+                {
+                    xOffset = 0.0f;
+                    positionInfoOffset();
+                }
+            }
             if (Input.GetKeyUp(KeyCode.LeftArrow))
-                previousPlant();
+            {
+                if (Mathf.Abs(xOffset) > 1)
+                {
+                    previousPlant();
+                }
+                else
+                {
+                    xOffset = 0.0f;
+                    positionInfoOffset();
+                }
+            }
         }
     }
 
@@ -278,7 +316,7 @@ public class IndexManager : Manager {
             // If the image exists, set this as the
             // main image. If not, I don't know what
             // was clicked so don't do anything!
-            if (index > 0)
+            if (index >= 0)
                 setCurrentImage(index);
         }
     }
@@ -329,6 +367,10 @@ public class IndexManager : Manager {
         {
             inDirectoryView = true;
 
+            searching = false;
+
+            GetComponent<Searching>().Clear();
+
             // Set all the objects that are
             // associated with Directory View
             // to true so they ARE seen.
@@ -361,6 +403,8 @@ public class IndexManager : Manager {
     {
         inDirectoryView = false;
 
+        searching = true;
+
         // Set all the objects that are
         // associated with Directory View
         // to false so they are NOT seen.
@@ -385,7 +429,7 @@ public class IndexManager : Manager {
      * plant - a copy of the plant that will be the 
      *         focus of the Info view.
     */
-    public void SearchResultClicked(GameObject plant)
+    public void SearchResultClicked(GameObject searchRslt)
     {
         // Set all the objects that are
         // associated with Search View
@@ -399,7 +443,10 @@ public class IndexManager : Manager {
 
         // Set the viewing plant to the
         // plant that is passed in.
-        viewingPlant = plant;
+        viewingPlant = searchRslt.GetComponent<SearchResult>().GetPlant();
+
+        // Set the searchResult clicked
+        searchResult = searchRslt;
 
         // Set up the information of the plant that
         // should be viewed in Info View.
@@ -726,45 +773,63 @@ public class IndexManager : Manager {
         xOffset = 0.0f;
         positionInfoOffset();
 
-        // Grab the index of the current
-        // plant in currentPlants.
-        int index = currentPlants.IndexOf(viewingPlant);
-
-        // If the index of the current plant
-        // + 1 is further than currentPlant's
-        // total number, we must change the
-        // page.
-        // Else just set the viewingPlant to
-        // be index + 1 in currentPlants.
-        if (index + 1 >= currentPlants.Count)
+        if (searching)
         {
-            // If we are on the final plant, just return
-            // out of here, we can't go right any further.
-            if (page * plantsPerPage + index + 1 >= plants.Count)
+            List<GameObject> searchResultList = GetComponent<Searching>().SearchResults;
+
+            int index = searchResultList.IndexOf(searchResult);
+
+            if (index + 1 < searchResultList.Count)
             {
-                return;
+                Destroy(viewingPlant);
+
+                searchResult = searchResultList[index + 1];
+
+                viewingPlant = searchResultList[index + 1].GetComponent<SearchResult>().GetPlant();
             }
-
-            // Change the page.
-            Next();
-
-            // Reset the new viewingPlant to be the
-            // first one on the next page.
-            viewingPlant = currentPlants[0];
-
-            // Hide the plants again since Next()
-            // will cause them to show.
-            hidePlants();
         }
         else
         {
-            // Reset the new viewingPlant to be
-            // index + 1 in currentPlants.
-            viewingPlant = currentPlants[index + 1];
-        }
+            // Grab the index of the current
+            // plant in currentPlants.
+            int index = currentPlants.IndexOf(viewingPlant);
 
-        // Destroy what was there and reset
-        // the information.
+            // If the index of the current plant
+            // + 1 is further than currentPlant's
+            // total number, we must change the
+            // page.
+            // Else just set the viewingPlant to
+            // be index + 1 in currentPlants.
+            if (index + 1 >= currentPlants.Count)
+            {
+                // If we are on the final plant, just return
+                // out of here, we can't go right any further.
+                if (page * plantsPerPage + index + 1 >= plants.Count)
+                {
+                    return;
+                }
+
+                // Change the page.
+                Next();
+
+                // Reset the new viewingPlant to be the
+                // first one on the next page.
+                viewingPlant = currentPlants[0];
+
+                // Hide the plants again since Next()
+                // will cause them to show.
+                hidePlants();
+            }
+            else
+            {
+                // Reset the new viewingPlant to be
+                // index + 1 in currentPlants.
+                viewingPlant = currentPlants[index + 1];
+            }
+
+            // Destroy what was there and reset
+            // the information.
+        }
         destroyInfo();
         setInfo();
     }
@@ -778,41 +843,59 @@ public class IndexManager : Manager {
         xOffset = 0.0f;
         positionInfoOffset();
 
-        // Grab the index of the current
-        // plant in currentPlants.
-        int index = currentPlants.IndexOf(viewingPlant);
-
-        // If the index of the current plant
-        // + 1 is further than currentPlant's
-        // total number, we must change the
-        // page.
-        // Else just set the viewingPlant to
-        // be index + 1 in currentPlants.
-        if (index - 1 < 0)
+        if (searching)
         {
-            // If we are on the first plant, just return
-            // out of here, we can't go left any further.
-            if (page * plantsPerPage + index - 1 < 0)
+            List<GameObject> searchResultList = GetComponent<Searching>().SearchResults;
+
+            int index = searchResultList.IndexOf(searchResult);
+
+            if (index - 1 >= 0)
             {
-                return;
+                Destroy(viewingPlant);
+
+                searchResult = searchResultList[index - 1];
+
+                viewingPlant = searchResultList[index - 1].GetComponent<SearchResult>().GetPlant();
             }
-
-            // Change the page.
-            Previous();
-
-            // Reset the new viewingPlant to be the
-            // first one on the next page.
-            viewingPlant = currentPlants[currentPlants.Count - 1];
-
-            // Hide the plants again since Next()
-            // will cause them to show.
-            hidePlants();
         }
         else
         {
-            // Reset the new viewingPlant to be
-            // index + 1 in currentPlants.
-            viewingPlant = currentPlants[index - 1];
+            // Grab the index of the current
+            // plant in currentPlants.
+            int index = currentPlants.IndexOf(viewingPlant);
+
+            // If the index of the current plant
+            // + 1 is further than currentPlant's
+            // total number, we must change the
+            // page.
+            // Else just set the viewingPlant to
+            // be index + 1 in currentPlants.
+            if (index - 1 < 0)
+            {
+                // If we are on the first plant, just return
+                // out of here, we can't go left any further.
+                if (page * plantsPerPage + index - 1 < 0)
+                {
+                    return;
+                }
+
+                // Change the page.
+                Previous();
+
+                // Reset the new viewingPlant to be the
+                // first one on the next page.
+                viewingPlant = currentPlants[currentPlants.Count - 1];
+
+                // Hide the plants again since Next()
+                // will cause them to show.
+                hidePlants();
+            }
+            else
+            {
+                // Reset the new viewingPlant to be
+                // index + 1 in currentPlants.
+                viewingPlant = currentPlants[index - 1];
+            }
         }
 
         // Destroy what was there and reset

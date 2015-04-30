@@ -28,6 +28,18 @@ public class SearchResult : MonoBehaviour {
         indexManager = index;
     }
 
+    /*
+     * GetPlant()
+     * 
+     * Returns a copy of the plant this object holds.
+    */
+    public GameObject GetPlant()
+    {
+        GameObject temp = (GameObject)Instantiate(plant);
+
+        return temp;
+    }
+
 
     /*
      * Clicked()
@@ -44,6 +56,6 @@ public class SearchResult : MonoBehaviour {
 
         // Call the Search Result Clicked button to 
         // change the view to looking at this plant.
-        indexManager.SearchResultClicked(temp);
+        indexManager.SearchResultClicked(this.gameObject);
     }
 }
